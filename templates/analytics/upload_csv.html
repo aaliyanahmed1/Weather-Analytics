@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Upload CSV Dataset - Weather Analytics Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-md-6">
+        <h2 class="mb-4 text-cyan"><i class="fa-solid fa-file-arrow-up me-2"></i>Upload Weather Dataset</h2>
+        
+        <div class="card glass-card p-4">
+            <div class="card-body">
+                <p class="text-white-50 mb-4">
+                    Upload a CSV file containing weather records. The backend will parse the data using Pandas, clean and validate it, and merge it with the existing database.
+                </p>
+                
+                <div class="alert alert-info border-0" style="background: rgba(13, 202, 240, 0.1); color: #0dcaf0;">
+                    <h5 class="alert-heading"><i class="fa-solid fa-circle-info me-2"></i>CSV Headers Format</h5>
+                    <p class="mb-0 small">The CSV file must contain the following columns (case-insensitive):</p>
+                    <code class="text-white small">date, temperature, humidity, wind_speed, precipitation, condition</code>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" class="mt-4">
+                    {% csrf_value = "" %}{% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="formFile" class="form-label text-white-50">Select CSV File</label>
+                        <input class="form-control form-control-custom" type="file" id="formFile" name="file" accept=".csv" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-grad w-100 py-2">
+                        <i class="fa-solid fa-upload me-2"></i>Upload and Process Data
+                    </button>
+                </form>
+                
+                <hr class="my-4 border-secondary border-opacity-25">
+                
+                <div class="text-center">
+                    <a href="{% static 'weather_sample.csv' %}" download class="text-purple text-decoration-none">
+                        <i class="fa-solid fa-download me-1"></i>Download Sample CSV Template
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

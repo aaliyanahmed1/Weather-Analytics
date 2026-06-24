@@ -1,0 +1,176 @@
+/* Sleek Modern Aesthetics & Color Palette */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --bg-primary: #0b0f19;
+    --bg-secondary: #131a2c;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-blue: #3b82f6;
+    --accent-indigo: #6366f1;
+    --accent-purple: #a855f7;
+    --accent-cyan: #06b6d4;
+    --glass-bg: rgba(19, 26, 44, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* Glassmorphism Classes */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition-smooth);
+}
+
+.glass-card:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 10px 40px 0 rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Navbar */
+.navbar-custom {
+    background: rgba(11, 15, 25, 0.8) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-indigo));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-link {
+    color: var(--text-secondary) !important;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--text-primary) !important;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* Custom Buttons */
+.btn-grad {
+    background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-purple) 100%);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 10px 24px;
+    transition: var(--transition-smooth);
+}
+
+.btn-grad:hover {
+    background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-indigo) 100%);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+    transform: scale(1.02);
+    color: #fff;
+}
+
+.btn-outline-custom {
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    background: transparent;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.btn-outline-custom:hover {
+    background: var(--accent-cyan);
+    color: var(--bg-primary);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+}
+
+/* Table Customization */
+.table-custom {
+    color: var(--text-primary) !important;
+}
+
+.table-custom th {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: var(--glass-border) !important;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.table-custom td {
+    background: transparent !important;
+    border-color: var(--glass-border) !important;
+    vertical-align: middle;
+}
+
+.table-custom tr:hover td {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Forms */
+.form-control-custom {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    border-radius: 10px;
+    padding: 12px 16px;
+    transition: var(--transition-smooth);
+}
+
+.form-control-custom:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+    color: var(--text-primary);
+    outline: none;
+}
+
+/* Summary Cards */
+.metric-card {
+    border-left: 4px solid var(--accent-blue);
+}
+.metric-card.purple {
+    border-left-color: var(--accent-purple);
+}
+.metric-card.cyan {
+    border-left-color: var(--accent-cyan);
+}
+.metric-card.indigo {
+    border-left-color: var(--accent-indigo);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease forwards;
+}
+
+/* Interactive custom elements */
+.badge-sunny { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+.badge-rainy { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.badge-cloudy { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.badge-snowy { background: rgba(6, 182, 212, 0.2); color: #06b6d4; }
+.badge-stormy { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.badge-windy { background: rgba(20, 184, 166, 0.2); color: #14b8a6; }

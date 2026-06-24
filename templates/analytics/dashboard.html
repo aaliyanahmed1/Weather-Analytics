@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Weather Analytics Portal{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <!-- Header with Action Buttons -->
+    <div class="col-12 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="text-cyan mb-0"><i class="fa-solid fa-chart-pie me-2"></i>Weather Dashboard</h2>
+            <p class="text-white-50 mb-0">High-level insights & data analytics</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'export_csv' %}?start_date={{ start_date }}&end_date={{ end_date }}&condition={{ selected_condition }}" class="btn btn-outline-custom">
+                <i class="fa-solid fa-file-csv me-1"></i> Export CSV
+            </a>
+            <a href="{% url 'export_pdf' %}?start_date={{ start_date }}&end_date={{ end_date }}&condition={{ selected_condition }}" class="btn btn-grad">
+                <i class="fa-solid fa-file-pdf me-1"></i> Export PDF Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="col-12 mb-4">
+        <div class="card glass-card p-3">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label text-white-50 small">Start Date</label>
+                    <input type="date" class="form-control form-control-custom" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label text-white-50 small">End Date</label>
+                    <input type="date" class="form-control form-control-custom" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="condition" class="form-label text-white-50 small">Weather Condition</label>
+                    <select class="form-select form-control-custom" id="condition" name="condition">
+                        <option value="">All Conditions</option>
+                        {% for code, name in conditions %}
+                            <option value="{{ code }}" {% if selected_condition == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-grad flex-grow-1">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-custom">
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if records_count > 0 %}
+    <!-- Summary Cards -->
+    <div class="col-12 mb-4">
+        <div class="row g-3">
+            <div class="col-6 col-lg-3">
+                <div class="card glass-card p-3 metric-card text-center h-100">
+                    <span class="text-white-50 small d-block">Total Records</span>
+                    <span class="fs-2 fw-bold text-cyan">{{ stats.count }}</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card glass-card p-3 metric-card purple text-center h-100">
+                    <span class="text-white-50 small d-block">Average Temp</span>
+                    <span class="fs-2 fw-bold text-purple">{{ stats.avg_temp }}°C</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card glass-card p-3 metric-card indigo text-center h-100">
+                    <span class="text-white-50 small d-block">Max Temp / Min Temp</span>
+                    <span class="fs-2 fw-bold text-indigo">{{ stats.max_temp }}° / {{ stats.min_temp }}°</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card glass-card p-3 metric-card cyan text-center h-100">
+                    <span class="text-white-50 small d-block">Avg Humidity</span>
+                    <span class="fs-2 fw-bold text-info">{{ stats.avg_humidity }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights & Weather Metrics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card glass-card h-100 p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-brain me-2"></i>Automated Insights</h4>
+            <div class="d-flex flex-column gap-3 mt-2">
+                {% if insights %}
+                    {% for insight in insights %}
+                        <div class="p-3 rounded bg-white bg-opacity-5" style="border-left: 3px solid var(--accent-indigo);">
+                            <p class="mb-0 text-white-50 small" style="line-height: 1.5;">{{ insight|safe }}</p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-white-50">Not enough data to generate patterns. Try removing filters.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 1: Temp Trend -->
+    <div class="col-lg-8 mb-4">
+        <div class="card glass-card p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-chart-line me-2"></i>Temperature Trend</h4>
+            <div style="position: relative; height:280px;">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Conditions Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card glass-card p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-chart-pie me-2"></i>Condition Share</h4>
+            <div style="position: relative; height:280px; display: flex; justify-content: center;">
+                <canvas id="conditionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Temperature vs Humidity Correlation -->
+    <div class="col-lg-8 mb-4">
+        <div class="card glass-card p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-chart-simple me-2"></i>Temp vs Humidity Correlation</h4>
+            <div style="position: relative; height:280px;">
+                <canvas id="corrChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="col-12">
+        <div class="card glass-card text-center p-5">
+            <i class="fa-solid fa-cloud-sun-rain fs-1 text-cyan mb-3"></i>
+            <h3>No Weather Data Found</h3>
+            <p class="text-white-50">Please clear your filters or seed/upload a CSV dataset to get started.</p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <a href="{% url 'upload_csv' %}" class="btn btn-grad"><i class="fa-solid fa-upload me-1"></i> Upload CSV</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if records_count > 0 %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const params = new URLSearchParams(window.location.search);
+        
+        fetch(`/api/charts/?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                renderTempChart(data.dates, data.temps, data.precip);
+                renderConditionChart(data.cond_labels, data.cond_values);
+                renderCorrelationChart(data.temps, data.humidity);
+            });
+            
+        function renderTempChart(labels, temps, precip) {
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperature (°C)',
+                            data: temps,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Precipitation (mm)',
+                            data: precip,
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                            borderWidth: 2,
+                            type: 'bar',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                        y1: {
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+        
+        function renderConditionChart(labels, values) {
+            const ctx = document.getElementById('conditionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            'rgba(234, 179, 8, 0.7)',  // Sunny
+                            'rgba(59, 130, 246, 0.7)',  // Rainy
+                            'rgba(148, 163, 184, 0.7)', // Cloudy
+                            'rgba(6, 182, 212, 0.7)',   // Snowy
+                            'rgba(168, 85, 247, 0.7)',  // Stormy
+                            'rgba(20, 184, 166, 0.7)'   // Windy
+                        ],
+                        borderColor: '#131a2c',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#f8fafc', boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        function renderCorrelationChart(temps, humidity) {
+            const ctx = document.getElementById('corrChart').getContext('2d');
+            const dataPoints = temps.map((t, idx) => ({ x: t, y: humidity[idx] }));
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Days',
+                        data: dataPoints,
+                        backgroundColor: 'rgba(168, 85, 247, 0.6)',
+                        borderColor: '#a855f7',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Temperature (°C)', color: '#f8fafc' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
+                            ticks: { color: '#94a3b8' } 
+                        },
+                        y: { 
+                            title: { display: true, text: 'Humidity (%)', color: '#f8fafc' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
+                            ticks: { color: '#94a3b8' } 
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
