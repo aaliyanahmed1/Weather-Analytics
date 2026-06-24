@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Presentation Slides - Weather Analytics Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-md-10 col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-cyan mb-0"><i class="fa-solid fa-person-chalkboard me-2"></i>Project Presentation</h2>
+            <span class="text-white-50">SCD Class Project</span>
+        </div>
+
+        <!-- Carousel for Slides -->
+        <div id="presentationCarousel" class="carousel slide" data-bs-ride="false">
+            <div class="carousel-inner">
+                <!-- Slide 1: Title -->
+                <div class="carousel-item active">
+                    <div class="card glass-card p-5 text-center d-flex flex-column justify-content-center align-items-center" style="min-height: 450px;">
+                        <i class="fa-solid fa-cloud-sun-rain text-cyan mb-4" style="font-size: 4rem;"></i>
+                        <h1 class="display-5 fw-bold text-white mb-2">Weather Analytics Portal</h1>
+                        <p class="fs-5 text-cyan mb-5">A Modular Full-Stack Web Application for Climate Analysis</p>
+                        
+                        <div class="border-top border-secondary border-opacity-25 pt-4 w-70 text-white-50">
+                            <p class="mb-1">Prepared By: <strong>Shakeel Ahmed</strong></p>
+                            <p class="mb-1">Student ID: <strong>F2023065276</strong></p>
+                            <p class="mb-0">Course: <strong>Software Construction & Development (SCD)</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Introduction -->
+                <div class="carousel-item">
+                    <div class="card glass-card p-5" style="min-height: 450px;">
+                        <h3 class="text-cyan mb-4"><i class="fa-solid fa-circle-info me-2"></i>1. Project Introduction</h3>
+                        <p class="fs-5 text-white-50 leading-relaxed mb-4">
+                            The <strong>Weather Analytics Portal</strong> bridges the gap between raw meteorological data and actionable insights.
+                        </p>
+                        <ul class="text-white-50 fs-5 mt-3 d-flex flex-column gap-3">
+                            <li><i class="fa-solid fa-circle-check text-cyan me-2"></i> Provides automated clean data intake, purging anomalies.</li>
+                            <li><i class="fa-solid fa-circle-check text-cyan me-2"></i> Facilitates robust search & analysis through interactive widgets.</li>
+                            <li><i class="fa-solid fa-circle-check text-cyan me-2"></i> Generates insights automatically, reducing manual weather interpretation.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Tech Stack & Architecture -->
+                <div class="carousel-item">
+                    <div class="card glass-card p-5" style="min-height: 450px;">
+                        <h3 class="text-cyan mb-4"><i class="fa-solid fa-layer-group me-2"></i>2. Architecture & Tech Stack</h3>
+                        <p class="text-white-50 fs-5 mb-4">Designed with modularity and separation of concerns:</p>
+                        <div class="row text-center mt-3">
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 bg-white bg-opacity-5 rounded border border-info border-opacity-25 h-100">
+                                    <h5 class="text-info"><i class="fa-solid fa-server me-2"></i>Backend</h5>
+                                    <p class="text-white-50 small mb-0 mt-2">Django (Python)<br>Pandas & NumPy<br>SQLite</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 bg-white bg-opacity-5 rounded border border-purple border-opacity-25 h-100">
+                                    <h5 class="text-purple"><i class="fa-solid fa-display me-2"></i>Frontend</h5>
+                                    <p class="text-white-50 small mb-0 mt-2">HTML5 & Custom CSS<br>Bootstrap 5<br>Chart.js (CDN)</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 bg-white bg-opacity-5 rounded border border-success border-opacity-25 h-100">
+                                    <h5 class="text-success"><i class="fa-solid fa-file-pdf me-2"></i>Exports</h5>
+                                    <p class="text-white-50 small mb-0 mt-2">ReportLab PDF Engine<br>Pandas CSV exporter</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Data Processing -->
+                <div class="carousel-item">
+                    <div class="card glass-card p-5" style="min-height: 450px;">
+                        <h3 class="text-cyan mb-4"><i class="fa-solid fa-gears me-2"></i>3. Pandas & NumPy Processing</h3>
+                        <p class="text-white-50 fs-5 mb-4">How backend calculations operate on data streams:</p>
+                        <ul class="text-white-50 fs-5 d-flex flex-column gap-3">
+                            <li><i class="fa-solid fa-bolt text-cyan me-2"></i> <strong>Data Cleaning:</strong> Handles missing/null temperatures, formats dates seamlessly.</li>
+                            <li><i class="fa-solid fa-bolt text-cyan me-2"></i> <strong>Extreme Weather Detection:</strong> Identifies heatwaves (&ge;35°C), storms, and flood hazards.</li>
+                            <li><i class="fa-solid fa-bolt text-cyan me-2"></i> <strong>Correlation Metrics:</strong> Calculates Pearson correlation coeff between temperature and humidity.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Dashboard & Visuals -->
+                <div class="carousel-item">
+                    <div class="card glass-card p-5" style="min-height: 450px;">
+                        <h3 class="text-cyan mb-4"><i class="fa-solid fa-chart-line me-2"></i>4. Visualizations & Analytics</h3>
+                        <p class="text-white-50 fs-5 mb-3">Providing real-time telemetry representation:</p>
+                        <ul class="text-white-50 fs-5 d-flex flex-column gap-3">
+                            <li><i class="fa-solid fa-square-check text-cyan me-2"></i> <strong>Metrics:</strong> Dynamic cards showing total records, average, max, and min temp.</li>
+                            <li><i class="fa-solid fa-square-check text-cyan me-2"></i> <strong>Interactive Charts:</strong> Line trends for temperature coupled with precipitation histograms.</li>
+                            <li><i class="fa-solid fa-square-check text-cyan me-2"></i> <strong>Scatter Mapping:</strong> Direct visualization of humidity/temperature interactions.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Summary -->
+                <div class="carousel-item">
+                    <div class="card glass-card p-5 text-center d-flex flex-column justify-content-center align-items-center" style="min-height: 450px;">
+                        <i class="fa-solid fa-circle-check text-success mb-3" style="font-size: 3.5rem;"></i>
+                        <h3 class="text-white mb-3">Project Summary & MVP Deliverables</h3>
+                        <p class="text-white-50 fs-5 mb-4">All goals in the Weather Analytics Portal proposal have been achieved.</p>
+                        
+                        <div class="d-flex flex-wrap justify-content-center gap-3 text-white-50">
+                            <span class="badge bg-secondary p-2"><i class="fa-solid fa-check me-1"></i> Clean Source Code</span>
+                            <span class="badge bg-secondary p-2"><i class="fa-solid fa-check me-1"></i> Database Seeder File</span>
+                            <span class="badge bg-secondary p-2"><i class="fa-solid fa-check me-1"></i> Interactive Dashboard</span>
+                            <span class="badge bg-secondary p-2"><i class="fa-solid fa-check me-1"></i> Exports (CSV / PDF)</span>
+                        </div>
+                        
+                        <a href="{% url 'dashboard' %}" class="btn btn-grad mt-5 px-4 py-2">
+                            <i class="fa-solid fa-house me-2"></i>Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#presentationCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#presentationCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+
+        <div class="text-center mt-3">
+            <span class="text-white-50 small">Use the side controls to navigate the presentation slides.</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

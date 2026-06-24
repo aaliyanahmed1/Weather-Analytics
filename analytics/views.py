@@ -1,5 +1,7 @@
 import io
 import datetime
+import urllib.request
+import urllib.parse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required

@@ -42,6 +42,11 @@
                             <i class="fa-solid fa-file-upload me-1"></i> Upload Dataset
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'presentation' %}active{% endif %}" href="{% url 'presentation' %}">
+                            <i class="fa-solid fa-person-chalkboard me-1"></i> Presentation
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
@@ -53,7 +58,7 @@
                     </li>
                     <li class="nav-item ms-lg-2">
                         <form method="post" action="{% url 'logout' %}" class="d-inline">
-                            {% csrf_value = "" %}{% csrf_token %}
+                            {% csrf_token %}
                             <button type="submit" class="btn btn-outline-custom py-1 px-3">
                                 <i class="fa-solid fa-sign-out-alt me-1"></i> Logout
                             </button>
