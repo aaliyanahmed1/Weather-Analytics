@@ -16,6 +16,11 @@
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.text-blue { color: var(--accent-blue) !important; }
+.text-indigo { color: var(--accent-indigo) !important; }
+.text-purple { color: var(--accent-purple) !important; }
+.text-cyan { color: var(--accent-cyan) !important; }
+
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -118,11 +123,12 @@ body {
 .table-custom td {
     background: transparent !important;
     border-color: var(--glass-border) !important;
+    color: var(--text-primary) !important;
     vertical-align: middle;
 }
 
 .table-custom tr:hover td {
-    background: rgba(255, 255, 255, 0.02) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Forms */

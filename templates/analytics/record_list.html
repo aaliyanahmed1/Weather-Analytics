@@ -12,23 +12,42 @@
     
     <div class="col-12">
         <div class="card glass-card p-4">
+            <form method="get" class="mb-4 d-flex gap-2 align-items-center">
+                <div class="input-group" style="max-width: 400px;">
+                    <span class="input-group-text bg-transparent border-secondary text-white-50"><i class="fa-solid fa-search"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control form-control-custom border-secondary" placeholder="Search by city or condition...">
+                </div>
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+                <button type="submit" class="btn btn-outline-info">Search</button>
+                {% if query %}
+                    <a href="{% url 'record_list' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+            
             <div class="table-responsive">
                 <table class="table table-custom table-hover">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Temperature (°C)</th>
+                            <th><a href="?sort={% if sort_by == 'date' %}-date{% else %}date{% endif %}&q={{ query }}" class="text-white text-decoration-none">Date {% if sort_by == 'date' %}<i class="fa-solid fa-sort-up"></i>{% elif sort_by == '-date' %}<i class="fa-solid fa-sort-down"></i>{% else %}<i class="fa-solid fa-sort text-white-50"></i>{% endif %}</a></th>
+                            <th><a href="?sort={% if sort_by == 'city' %}-city{% else %}city{% endif %}&q={{ query }}" class="text-white text-decoration-none">City {% if sort_by == 'city' %}<i class="fa-solid fa-sort-up"></i>{% elif sort_by == '-city' %}<i class="fa-solid fa-sort-down"></i>{% else %}<i class="fa-solid fa-sort text-white-50"></i>{% endif %}</a></th>
+                            <th><a href="?sort={% if sort_by == 'temperature' %}-temperature{% else %}temperature{% endif %}&q={{ query }}" class="text-white text-decoration-none">Temp (°C) {% if sort_by == 'temperature' %}<i class="fa-solid fa-sort-up"></i>{% elif sort_by == '-temperature' %}<i class="fa-solid fa-sort-down"></i>{% else %}<i class="fa-solid fa-sort text-white-50"></i>{% endif %}</a></th>
                             <th>Humidity (%)</th>
-                            <th>Wind Speed (km/h)</th>
-                            <th>Precipitation (mm)</th>
-                            <th>Condition</th>
+                            <th>Wind (km/h)</th>
+                            <th>Precip (mm)</th>
+                            <th><a href="?sort={% if sort_by == 'condition' %}-condition{% else %}condition{% endif %}&q={{ query }}" class="text-white text-decoration-none">Condition {% if sort_by == 'condition' %}<i class="fa-solid fa-sort-up"></i>{% elif sort_by == '-condition' %}<i class="fa-solid fa-sort-down"></i>{% else %}<i class="fa-solid fa-sort text-white-50"></i>{% endif %}</a></th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for record in records %}
+                        {% for record in page_obj %}
                         <tr>
-                            <td>{{ record.date|date:"Y-m-d" }}</td>
+                            <td>
+                                {{ record.date|date:"Y-m-d" }}
+                                {% if record.time %}
+                                    <span class="text-white-50 ms-2 small">{{ record.time|time:"H:i" }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.city }}</td>
                             <td>{{ record.temperature }}</td>
                             <td>{{ record.humidity }}</td>
                             <td>{{ record.wind_speed }}</td>
@@ -65,6 +84,33 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Pagination Controls -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link bg-transparent text-cyan border-secondary" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&sort={{ sort_by }}">Previous</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link bg-transparent text-white-50 border-secondary">Previous</span></li>
+                    {% endif %}
+                    
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><span class="page-link bg-cyan text-white border-cyan">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link bg-transparent text-cyan border-secondary" href="?page={{ i }}&q={{ query }}&sort={{ sort_by }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link bg-transparent text-cyan border-secondary" href="?page={{ page_obj.next_page_number }}&q={{ query }}&sort={{ sort_by }}">Next</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link bg-transparent text-white-50 border-secondary">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
         </div>
     </div>
 </div>

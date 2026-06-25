@@ -13,7 +13,9 @@ class WeatherRecord(models.Model):
         ('Windy', 'Windy'),
     ]
     
-    date = models.DateField(unique=True)
+    date = models.DateField()
+    time = models.TimeField(null=True, blank=True)
+    city = models.CharField(max_length=100, default='New York')
     temperature = models.FloatField(help_text="Temperature in Celsius")
     humidity = models.FloatField(help_text="Humidity percentage")
     wind_speed = models.FloatField(help_text="Wind speed in km/h")
@@ -28,6 +30,7 @@ class WeatherRecord(models.Model):
 
     class Meta:
         ordering = ['-date']
+        unique_together = ('date', 'city')
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

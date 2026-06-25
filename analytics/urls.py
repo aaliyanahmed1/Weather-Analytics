@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     # Dashboard
     path('', views.dashboard_view, name='dashboard'),
+    path('fetch-live/', views.fetch_live_weather_view, name='fetch_live_weather'),
     path('presentation/', views.presentation_view, name='presentation'),
     path('api/charts/', views.dashboard_chart_data, name='chart_data'),
     

@@ -8,10 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
+from django.db import models
 from django.db.models import Avg, Max, Min, Count
 from django.db import IntegrityError
+from django.core.paginator import Paginator
 import pandas as pd
 import numpy as np
+import requests
 
 # ReportLab imports for PDF generation
 from reportlab.lib.pagesizes import letter
@@ -67,10 +70,14 @@ def profile_view(request):
 def dashboard_view(request):
     records = WeatherRecord.objects.all()
     
-    # Filter handling
+    # Get unique cities for filter dropdown
+    unique_cities = WeatherRecord.objects.values_list('city', flat=True).distinct().order_by('city')
+    
+    # Filters
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     condition = request.GET.get('condition')
+    selected_city = request.GET.get('city')
     
     if start_date:
         records = records.filter(date__gte=start_date)
@@ -78,6 +85,8 @@ def dashboard_view(request):
         records = records.filter(date__lte=end_date)
     if condition:
         records = records.filter(condition=condition)
+    if selected_city:
+        records = records.filter(city=selected_city)
         
     count = records.count()
     
@@ -146,15 +155,102 @@ def dashboard_view(request):
     # Unique conditions for filters
     conditions = WeatherRecord.CONDITION_CHOICES
     
+    top_records = records.order_by('-temperature')[:10]
+    
     return render(request, 'analytics/dashboard.html', {
         'stats': stats,
         'insights': insights,
         'conditions': conditions,
+        'unique_cities': unique_cities,
         'records_count': count,
         'start_date': start_date or '',
         'end_date': end_date or '',
-        'selected_condition': condition or ''
+        'selected_condition': condition or '',
+        'selected_city': selected_city or '',
+        'top_records': top_records
     })
+
+@login_required
+def fetch_live_weather_view(request):
+    location = request.user.profile.location or "New York"
+    
+    geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(location)}&count=1&language=en&format=json"
+    
+    try:
+        geo_response = requests.get(geo_url)
+        geo_response.raise_for_status()
+        geo_data = geo_response.json()
+        
+        if not geo_data.get('results'):
+            messages.error(request, f"Could not find coordinates for location: {location}")
+            return redirect('dashboard')
+            
+        lat = geo_data['results'][0]['latitude']
+        lon = geo_data['results'][0]['longitude']
+        
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&past_days=7&timezone=auto"
+        
+        weather_response = requests.get(weather_url)
+        weather_response.raise_for_status()
+        w_data = weather_response.json()
+        
+        daily = w_data.get('daily', {})
+        if not daily:
+            messages.error(request, "No weather data returned.")
+            return redirect('dashboard')
+            
+        dates = daily.get('time', [])
+        temps_max = daily.get('temperature_2m_max', [])
+        temps_min = daily.get('temperature_2m_min', [])
+        precips = daily.get('precipitation_sum', [])
+        winds = daily.get('windspeed_10m_max', [])
+        
+        records_added = 0
+        for i in range(len(dates)):
+            if temps_max[i] is None or precips[i] is None or winds[i] is None:
+                continue
+                
+            date_obj = datetime.datetime.strptime(dates[i], "%Y-%m-%d").date()
+            temp_avg = (temps_max[i] + temps_min[i]) / 2 if temps_min[i] is not None else temps_max[i]
+            precip = precips[i]
+            wind = winds[i]
+            
+            if precip > 10:
+                condition = 'Stormy'
+            elif precip > 0:
+                condition = 'Rainy'
+            elif wind > 25:
+                condition = 'Windy'
+            elif temp_avg > 25:
+                condition = 'Sunny'
+            else:
+                condition = 'Cloudy'
+                
+            WeatherRecord.objects.update_or_create(
+                date=date_obj,
+                city=location.title(),
+                defaults={
+                    'time': datetime.datetime.now().time(),
+                    'temperature': round(temp_avg, 1),
+                    'humidity': 50.0,
+                    'wind_speed': wind,
+                    'precipitation': precip,
+                    'condition': condition
+                }
+            )
+            records_added += 1
+            
+        if records_added > 0:
+            messages.success(request, f"Successfully fetched and updated {records_added} days of weather data for {location} from Open-Meteo!")
+        else:
+            messages.warning(request, "No new data could be parsed.")
+            
+    except requests.RequestException as e:
+        messages.error(request, f"API Error: {str(e)}")
+    except Exception as e:
+        messages.error(request, f"Unexpected error: {str(e)}")
+        
+    return redirect('dashboard')
 
 @login_required
 def dashboard_chart_data(request):
@@ -184,6 +280,15 @@ def dashboard_chart_data(request):
     # Condition distribution
     cond_counts = df['condition'].value_counts().to_dict()
     
+    # Bar Chart: Avg Temp by Condition
+    avg_temp_by_cond = df.groupby('condition')['temperature'].mean().round(1).to_dict()
+    
+    # Histogram: Temperature Distribution
+    bins = [-100, 0, 10, 20, 30, 40, 100]
+    labels = ['<0°C', '0-10°C', '10-20°C', '20-30°C', '30-40°C', '>40°C']
+    df['temp_bin'] = pd.cut(df['temperature'], bins=bins, labels=labels, right=False)
+    hist_counts = df['temp_bin'].value_counts().reindex(labels, fill_value=0).tolist()
+    
     return JsonResponse({
         'dates': df['date'].tolist(),
         'temps': df['temperature'].tolist(),
@@ -191,15 +296,42 @@ def dashboard_chart_data(request):
         'wind': df['wind_speed'].tolist(),
         'precip': df['precipitation'].tolist(),
         'cond_labels': list(cond_counts.keys()),
-        'cond_values': list(cond_counts.values())
+        'cond_values': list(cond_counts.values()),
+        'bar_labels': list(avg_temp_by_cond.keys()),
+        'bar_values': list(avg_temp_by_cond.values()),
+        'hist_labels': labels,
+        'hist_values': hist_counts
     })
 
 # ----------------- Weather Record CRUD Views -----------------
 
 @login_required
 def record_list_view(request):
-    records = WeatherRecord.objects.all().order_by('-date')
-    return render(request, 'analytics/record_list.html', {'records': records})
+    records = WeatherRecord.objects.all()
+    
+    # Search
+    query = request.GET.get('q')
+    if query:
+        records = records.filter(models.Q(city__icontains=query) | models.Q(condition__icontains=query))
+        
+    # Sort
+    sort_by = request.GET.get('sort', '-date')
+    valid_sorts = ['date', '-date', 'city', '-city', 'temperature', '-temperature', 'condition', '-condition']
+    if sort_by in valid_sorts:
+        records = records.order_by(sort_by)
+    else:
+        records = records.order_by('-date')
+        
+    # Pagination
+    paginator = Paginator(records, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'analytics/record_list.html', {
+        'page_obj': page_obj, 
+        'query': query or '', 
+        'sort_by': sort_by
+    })
 
 @login_required
 def record_create_view(request):
@@ -257,9 +389,9 @@ def upload_csv_view(request):
             df = pd.read_csv(csv_file)
             
             # Column mapping check
-            required_cols = {'date', 'temperature', 'humidity', 'wind_speed', 'precipitation', 'condition'}
+            required_cols = {'date', 'temperature', 'condition'}
             if not required_cols.issubset(df.columns.str.lower()):
-                messages.error(request, f"CSV must contain these headers: {', '.join(required_cols)}")
+                messages.error(request, f"CSV must contain at least these headers: {', '.join(required_cols)}")
                 return redirect('upload_csv')
             
             # Normalize column names to lowercase
@@ -267,6 +399,16 @@ def upload_csv_view(request):
             
             # Cleaning: drop rows with missing essential fields, fill others
             df = df.dropna(subset=['date', 'temperature', 'condition'])
+            if 'city' not in df.columns:
+                df['city'] = 'New York'
+            
+            if 'humidity' not in df.columns:
+                df['humidity'] = 50.0
+            if 'wind_speed' not in df.columns:
+                df['wind_speed'] = 0.0
+            if 'precipitation' not in df.columns:
+                df['precipitation'] = 0.0
+                
             df['humidity'] = df['humidity'].fillna(50.0)
             df['wind_speed'] = df['wind_speed'].fillna(0.0)
             df['precipitation'] = df['precipitation'].fillna(0.0)
@@ -282,6 +424,7 @@ def upload_csv_view(request):
                     # Create or update weather record
                     WeatherRecord.objects.update_or_create(
                         date=parsed_date,
+                        city=str(row.get('city', 'New York')).strip().title(),
                         defaults={
                             'temperature': float(row['temperature']),
                             'humidity': float(row['humidity']),

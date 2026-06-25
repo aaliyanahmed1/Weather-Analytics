@@ -14,7 +14,10 @@
             <h2 class="text-cyan mb-0"><i class="fa-solid fa-chart-pie me-2"></i>Weather Dashboard</h2>
             <p class="text-white-50 mb-0">High-level insights & data analytics</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'fetch_live_weather' %}" class="btn btn-outline-info">
+                <i class="fa-solid fa-cloud-bolt me-1"></i> Fetch Live Data ({{ user.profile.location|default:"New York" }})
+            </a>
             <a href="{% url 'export_csv' %}?start_date={{ start_date }}&end_date={{ end_date }}&condition={{ selected_condition }}" class="btn btn-outline-custom">
                 <i class="fa-solid fa-file-csv me-1"></i> Export CSV
             </a>
@@ -42,6 +45,15 @@
                         <option value="">All Conditions</option>
                         {% for code, name in conditions %}
                             <option value="{{ code }}" {% if selected_condition == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="city" class="form-label text-white-50 small">City</label>
+                    <select class="form-select form-control-custom" id="city" name="city">
+                        <option value="">All Cities</option>
+                        {% for c in unique_cities %}
+                            <option value="{{ c }}" {% if selected_city == c %}selected{% endif %}>{{ c }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -95,8 +107,8 @@
             <div class="d-flex flex-column gap-3 mt-2">
                 {% if insights %}
                     {% for insight in insights %}
-                        <div class="p-3 rounded bg-white bg-opacity-5" style="border-left: 3px solid var(--accent-indigo);">
-                            <p class="mb-0 text-white-50 small" style="line-height: 1.5;">{{ insight|safe }}</p>
+                        <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.05); border-left: 3px solid var(--accent-indigo);">
+                            <p class="mb-0 text-white" style="line-height: 1.6; font-size: 0.95rem;">{{ insight|safe }}</p>
                         </div>
                     {% endfor %}
                 {% else %}
@@ -127,11 +139,76 @@
     </div>
 
     <!-- Chart 3: Temperature vs Humidity Correlation -->
-    <div class="col-lg-8 mb-4">
+    <div class="col-lg-12 mb-4">
         <div class="card glass-card p-4">
             <h4 class="text-cyan mb-3"><i class="fa-solid fa-chart-simple me-2"></i>Temp vs Humidity Correlation</h4>
             <div style="position: relative; height:280px;">
                 <canvas id="corrChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chart 4: Average Temp by Condition (Bar Chart) -->
+    <div class="col-lg-6 mb-4">
+        <div class="card glass-card p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-chart-column me-2"></i>Avg Temp by Condition</h4>
+            <div style="position: relative; height:280px;">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 5: Temperature Distribution (Histogram) -->
+    <div class="col-lg-6 mb-4">
+        <div class="card glass-card p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-chart-bar me-2"></i>Temperature Distribution</h4>
+            <div style="position: relative; height:280px;">
+                <canvas id="histChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top 10 Records Table -->
+    <div class="col-12 mb-4">
+        <div class="card glass-card p-4">
+            <h4 class="text-cyan mb-3"><i class="fa-solid fa-fire me-2"></i>Top 10 Hottest Days</h4>
+            <div class="table-responsive">
+                <table class="table table-custom table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>City</th>
+                            <th>Temp (°C)</th>
+                            <th>Condition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tr in top_records %}
+                        <tr>
+                            <td>
+                                {{ tr.date|date:"Y-m-d" }}
+                                {% if tr.time %}
+                                    <span class="text-white-50 ms-2 small">{{ tr.time|time:"H:i" }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ tr.city }}</td>
+                            <td class="text-danger fw-bold">{{ tr.temperature }}</td>
+                            <td>
+                                <span class="badge badge-{{ tr.condition|lower }}">
+                                    {% if tr.condition == 'Sunny' %}<i class="fa-solid fa-sun me-1"></i>
+                                    {% elif tr.condition == 'Rainy' %}<i class="fa-solid fa-cloud-showers-heavy me-1"></i>
+                                    {% elif tr.condition == 'Cloudy' %}<i class="fa-solid fa-cloud me-1"></i>
+                                    {% elif tr.condition == 'Snowy' %}<i class="fa-solid fa-snowflake me-1"></i>
+                                    {% elif tr.condition == 'Stormy' %}<i class="fa-solid fa-bolt me-1"></i>
+                                    {% elif tr.condition == 'Windy' %}<i class="fa-solid fa-wind me-1"></i>
+                                    {% endif %}
+                                    {{ tr.condition }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -163,6 +240,8 @@
                 renderTempChart(data.dates, data.temps, data.precip);
                 renderConditionChart(data.cond_labels, data.cond_values);
                 renderCorrelationChart(data.temps, data.humidity);
+                renderBarChart(data.bar_labels, data.bar_values);
+                renderHistChart(data.hist_labels, data.hist_values);
             });
             
         function renderTempChart(labels, temps, precip) {
@@ -274,6 +353,60 @@
                     plugins: {
                         legend: { display: false }
                     }
+                }
+            });
+        }
+        
+        function renderBarChart(labels, values) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Average Temperature (°C)',
+                        data: values,
+                        backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                        borderColor: '#f59e0b',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { labels: { color: '#f8fafc' } } }
+                }
+            });
+        }
+        
+        function renderHistChart(labels, values) {
+            const ctx = document.getElementById('histChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Days',
+                        data: values,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)', offset: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+                    },
+                    plugins: { legend: { labels: { color: '#f8fafc' } } }
                 }
             });
         }

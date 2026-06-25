@@ -39,9 +39,10 @@ class ProfileUpdateForm(forms.ModelForm):
 class WeatherRecordForm(forms.ModelForm):
     class Meta:
         model = WeatherRecord
-        fields = ['date', 'temperature', 'humidity', 'wind_speed', 'precipitation', 'condition']
+        fields = ['date', 'city', 'temperature', 'humidity', 'wind_speed', 'precipitation', 'condition']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control form-control-custom'}),
+            'city': forms.TextInput(attrs={'class': 'form-control form-control-custom'}),
             'temperature': forms.NumberInput(attrs={'class': 'form-control form-control-custom', 'step': '0.1', 'placeholder': 'e.g. 24.5'}),
             'humidity': forms.NumberInput(attrs={'class': 'form-control form-control-custom', 'step': '0.1', 'placeholder': 'e.g. 60'}),
             'wind_speed': forms.NumberInput(attrs={'class': 'form-control form-control-custom', 'step': '0.1', 'placeholder': 'e.g. 15.2'}),
